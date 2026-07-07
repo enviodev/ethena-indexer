@@ -208,7 +208,24 @@ type StakingStats {
   cooldownDurationSeconds: BigInt!
   depositCount: Int!
   cooldownCount: Int!
+  # live sUSDe yield from the trailing 7 days of RewardsReceived events:
+  # apr7dPct = simple annualized rate; apy7dPct = weekly-compounded. Percent
+  # units (5.2 = 5.2%). Updated on every rewards payment (~every 8h).
+  apr7dPct: Float!
+  apy7dPct: Float!
   lastUpdatedTimestamp: BigInt!
+}
+
+# Daily sUSDe yield series — one row per UTC day with rewards activity.
+# aprDayPct annualizes that single day's rewards against the vault's staked
+# USDe at the time of the last payment. Full history since staking genesis.
+type DailyStakingYield {
+  id: ID! # UTC day start timestamp (seconds), as string
+  dayStartTimestamp: BigInt! @index
+  rewardsReceived: BigInt!
+  totalStakedAtEnd: BigInt!
+  rewardEvents: Int!
+  aprDayPct: Float!
 }
 
 # A confirmed unstake claim (USDe left the silo) that could not be attributed

@@ -227,6 +227,51 @@ describe("sUSDe staking handlers", () => {
     t.expect(stats.cooldownCount).toBe(2);
   });
 
+  it("RewardsReceived: builds the daily yield series and the 7d trailing APR/APY", async (t) => {
+    const indexer = createTestIndexer();
+    const DAY = 86_400;
+    // Anchor to a UTC day boundary so both events land in one day bucket.
+    const day0 = Math.floor(TS / DAY) * DAY;
+    const staked = usde(1_000_000n);
+
+    await deposit(indexer, { owner: OWNER, assets: staked, block: 100, logIndex: 0, timestamp: day0 });
+
+    // Two reward payments of 500 USDe on the same day, on 1M staked (+rewards).
+    for (const [i, ts] of [day0 + 3600, day0 + 7200].entries()) {
+      await indexer.process({
+        chains: {
+          1: {
+            simulate: [
+              {
+                contract: "StakedUSDe",
+                event: "RewardsReceived",
+                logIndex: 0,
+                block: { number: 101 + i, timestamp: ts },
+                transaction: { hash: TX, from: OWNER },
+                params: { amount: usde(500n) },
+              },
+            ],
+          },
+        },
+      });
+    }
+
+    const daily = await indexer.DailyStakingYield.getOrThrow(String(day0));
+    t.expect(daily.rewardsReceived).toBe(usde(1000n));
+    t.expect(daily.rewardEvents).toBe(2);
+    t.expect(daily.totalStakedAtEnd).toBe(usde(1_001_000n));
+    // 1000/1,001,000 annualized: ~36.46%/yr for a single 0.1%/day reading.
+    t.expect(daily.aprDayPct).toBeCloseTo((1000 / 1_001_000) * 365 * 100, 6);
+
+    const stats = await indexer.StakingStats.getOrThrow("global");
+    // Only one day of the 7d window has rewards → weekly rate = 1000/1,001,000.
+    const weekly = 1000 / 1_001_000;
+    t.expect(stats.apr7dPct).toBeCloseTo(weekly * (365 / 7) * 100, 6);
+    t.expect(stats.apy7dPct).toBeCloseTo((Math.pow(1 + weekly, 365 / 7) - 1) * 100, 6);
+    // Compounded APY must exceed simple APR.
+    t.expect(stats.apy7dPct).toBeGreaterThan(stats.apr7dPct);
+  });
+
   it("RewardsReceived: accrues to vault + cumulativeRewards, NOT into netFlow", async (t) => {
     const indexer = createTestIndexer();
     await indexer.process({

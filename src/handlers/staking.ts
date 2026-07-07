@@ -55,6 +55,8 @@ async function getOrCreateStakingStats(
     cooldownDurationSeconds: INITIAL_COOLDOWN_DURATION_SECONDS,
     depositCount: 0,
     cooldownCount: 0,
+    apr7dPct: 0,
+    apy7dPct: 0,
     lastUpdatedTimestamp: 0n,
   });
 }
@@ -222,7 +224,8 @@ indexer.onEvent(
 );
 
 // RewardsReceived(amount): protocol yield transferred into the vault. Increases
-// the value of every share; accrues to totalStakedUsde.
+// the value of every share; accrues to totalStakedUsde. Also maintains the
+// daily yield series and the live 7d trailing APR/APY.
 indexer.onEvent(
   { contract: "StakedUSDe", event: "RewardsReceived" },
   async ({ event, context }) => {
@@ -238,10 +241,50 @@ indexer.onEvent(
     });
 
     const stats = await getOrCreateStakingStats(context);
+    const totalStaked = stats.totalStakedUsde + amount; // yield accrues to vault
+
+    // Daily yield row (UTC day buckets).
+    const DAY = 86_400;
+    const dayStart = Math.floor(ts / DAY) * DAY;
+    const daily = await context.DailyStakingYield.getOrCreate({
+      id: String(dayStart),
+      dayStartTimestamp: BigInt(dayStart),
+      rewardsReceived: 0n,
+      totalStakedAtEnd: 0n,
+      rewardEvents: 0,
+      aprDayPct: 0,
+    });
+    const rewardsToday = daily.rewardsReceived + amount;
+    context.DailyStakingYield.set({
+      ...daily,
+      rewardsReceived: rewardsToday,
+      totalStakedAtEnd: totalStaked,
+      rewardEvents: daily.rewardEvents + 1,
+      aprDayPct: totalStaked > 0n
+        ? (Number(rewardsToday) / Number(totalStaked)) * 365 * 100
+        : 0,
+    });
+
+    // 7d trailing window: today's row (just written — in-memory read) plus the
+    // previous six days. Missing days count as zero rewards, so the first week
+    // of history reads low rather than spiking. Rewards land ~3x/day, so this
+    // costs at most 7 point reads a few times a day — negligible.
+    let rewards7d = 0n;
+    for (let i = 0; i < 7; i++) {
+      const row = await context.DailyStakingYield.get(String(dayStart - i * DAY));
+      if (row) rewards7d += row.rewardsReceived;
+    }
+    const weeklyRate = totalStaked > 0n ? Number(rewards7d) / Number(totalStaked) : 0;
+    const apr7dPct = weeklyRate * (365 / 7) * 100;
+    // Ethena-style headline APY: weekly compounding of the trailing rate.
+    const apy7dPct = (Math.pow(1 + weeklyRate, 365 / 7) - 1) * 100;
+
     context.StakingStats.set({
       ...stats,
       cumulativeRewards: stats.cumulativeRewards + amount,
-      totalStakedUsde: stats.totalStakedUsde + amount, // yield accrues to vault
+      totalStakedUsde: totalStaked,
+      apr7dPct,
+      apy7dPct,
       lastUpdatedTimestamp: BigInt(ts),
     });
 
