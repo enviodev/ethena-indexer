@@ -33,3 +33,6 @@ cache
 *.res.mjs
 .env
 .pnpm-store
+
+# local working docs
+PLAN.md
