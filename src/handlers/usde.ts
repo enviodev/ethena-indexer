@@ -34,6 +34,7 @@ indexer.onEvent(
     if (value >= LARGE_TRANSFER_THRESHOLD) {
       const largeTransfer: LargeTransfer = {
         id: `${event.chainId}_${event.block.number}_${event.logIndex}`,
+        chainId: event.chainId,
         token: "USDe",
         from,
         to,

@@ -26,6 +26,14 @@ contracts:
       - event: "Mint(string indexed order_id, address indexed benefactor, address indexed beneficiary, address minter, address collateral_asset, uint256 collateral_amount, uint256 usde_amount)"
       - event: "Redeem(string indexed order_id, address indexed benefactor, address indexed beneficiary, address redeemer, address collateral_asset, uint256 collateral_amount, uint256 usde_amount)"
       - event: "CustodyTransfer(address indexed wallet, address indexed asset, uint256 amount)"
+  # LayerZero OFT deployments of USDe/sUSDe on L2s (same canonical addresses on
+  # every chain below; presence + supply verified on-chain 2026-07-07).
+  - name: UsdeOFT
+    events:
+      - event: "Transfer(address indexed from, address indexed to, uint256 value)"
+  - name: SusdeOFT
+    events:
+      - event: "Transfer(address indexed from, address indexed to, uint256 value)"
 chains:
   - id: 1 # Ethereum Mainnet
     start_block: 0 # HyperSync auto-detects first event block per contract
@@ -38,3 +46,38 @@ chains:
         address: "0x2CC440b721d2CaFd6D64908D6d8C4aCC57F8Afc3"
       - name: EthenaMintingV2
         address: "0xe3490297a08d6fC8Da46Edb7B6142E4F461b62D3"
+  - id: 42161 # Arbitrum One
+    start_block: 0
+    contracts:
+      - name: UsdeOFT
+        address: "0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34"
+      - name: SusdeOFT
+        address: "0x211Cc4DD073734dA055fbF44a2b4667d5E5fE5d2"
+  - id: 8453 # Base
+    start_block: 0
+    contracts:
+      - name: UsdeOFT
+        address: "0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34"
+      - name: SusdeOFT
+        address: "0x211Cc4DD073734dA055fbF44a2b4667d5E5fE5d2"
+  - id: 56 # BNB Chain
+    start_block: 0
+    contracts:
+      - name: UsdeOFT
+        address: "0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34"
+      - name: SusdeOFT
+        address: "0x211Cc4DD073734dA055fbF44a2b4667d5E5fE5d2"
+  - id: 5000 # Mantle
+    start_block: 0
+    contracts:
+      - name: UsdeOFT
+        address: "0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34"
+      - name: SusdeOFT
+        address: "0x211Cc4DD073734dA055fbF44a2b4667d5E5fE5d2"
+  - id: 999 # HyperEVM
+    start_block: 0
+    contracts:
+      - name: UsdeOFT
+        address: "0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34"
+      - name: SusdeOFT
+        address: "0x211Cc4DD073734dA055fbF44a2b4667d5E5fE5d2"

@@ -84,6 +84,7 @@ type ProtocolStats {
 
 type LargeTransfer {
   id: ID!
+  chainId: Int! @index
   token: String! @index # "USDe" | "sUSDe"
   from: String! @index
   to: String! @index
@@ -92,6 +93,49 @@ type LargeTransfer {
   blockNumber: BigInt!
   timestamp: BigInt! @index
   txHash: String!
+}
+
+# ── Opportunities backend: multichain balances & integration TVL ──────────
+
+type TokenBalance {
+  id: ID! # chainId_token_holder
+  chainId: Int! @index
+  token: String! @index # "USDe" | "sUSDe"
+  holder: String! @index
+  balance: BigInt! @index
+  # slug of the Opportunity this holder is classified into (registry), if any
+  opportunitySlug: String @index
+  lastUpdatedTimestamp: BigInt!
+}
+
+# A place USDe/sUSDe can be put to work (Pendle market, Aave pool, Morpho,
+# CEX custody, ...). One row per registry slug; balances are live TVL held by
+# the classified holder contracts.
+type Opportunity {
+  id: ID! # registry slug, e.g. "pendle-susde-ethereum"
+  name: String!
+  protocol: String! @index
+  category: String! @index
+  chainId: Int! @index
+  usdeBalance: BigInt!
+  susdeBalance: BigInt!
+  lastUpdatedTimestamp: BigInt!
+}
+
+type ChainSupply {
+  id: ID! # chainId_token
+  chainId: Int! @index
+  token: String! @index
+  totalSupply: BigInt!
+  lastUpdatedTimestamp: BigInt!
+}
+
+type OpportunityHourlySnapshot {
+  id: ID! # slug_hourStart
+  opportunitySlug: String! @index
+  hourStartTimestamp: BigInt! @index
+  usdeBalance: BigInt!
+  susdeBalance: BigInt!
 }
 
 # ── sUSDe staking & cooldown liability queue ──────────────────────────────

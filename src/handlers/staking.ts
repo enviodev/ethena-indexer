@@ -293,6 +293,7 @@ indexer.onEvent(
     if (value >= LARGE_TRANSFER_THRESHOLD) {
       context.LargeTransfer.set({
         id: `${event.chainId}_${event.block.number}_${event.logIndex}`,
+        chainId: event.chainId,
         token: "sUSDe",
         from,
         to,
