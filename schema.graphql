@@ -110,18 +110,32 @@ type TokenBalance {
 
 # A place USDe/sUSDe can be put to work (Pendle market, Aave pool, Morpho,
 # CEX custody, ...). One row per registry slug; balances are live TVL held by
-# the classified holder contracts.
+# the classified holder contracts. Semantics are balance-accounting: the
+# balances are exactly what the venue's contracts HOLD of each token (verified
+# against balanceOf), not a claim about what the venue "is for".
 type Opportunity {
   id: ID! # registry slug, e.g. "pendle-susde-ethereum"
   name: String!
   protocol: String! @index
   category: String! @index
   chainId: Int! @index
+  # true for venues users can put money into (money-market/dex-pool/
+  # yield-tokenization/vault/perps); false for supply-attribution
+  # infrastructure (bridge/cex/other). "Top opportunities" queries should
+  # filter on this — the largest rows by balance are bridge lockboxes.
+  isYieldVenue: Boolean! @index
   usdeBalance: BigInt!
   susdeBalance: BigInt!
   lastUpdatedTimestamp: BigInt!
 }
 
+# Per-chain circulating supply from mint/burn accounting.
+# NOTE: do NOT sum this across chains. Bridging LOCKS tokens in the mainnet
+# OFT adapter (a plain transfer) and MINTS on the destination chain, so a
+# cross-chain sum double-counts every bridged token. Canonical global supply =
+# ChainSupply(1_<token>) alone; the sum of all non-mainnet rows reconciles
+# against the mainnet bridge-adapter TokenBalance (Ethena bridges to more
+# chains than this indexer covers, so indexed L2 supply <= adapter balance).
 type ChainSupply {
   id: ID! # chainId_token
   chainId: Int! @index
@@ -130,6 +144,9 @@ type ChainSupply {
   lastUpdatedTimestamp: BigInt!
 }
 
+# Sparse, transfer-driven snapshots: a row is written only for hours in which
+# the opportunity's balances changed. Time-series consumers should forward-fill
+# from the last snapshot at or before each hour.
 type OpportunityHourlySnapshot {
   id: ID! # slug_hourStart
   opportunitySlug: String! @index

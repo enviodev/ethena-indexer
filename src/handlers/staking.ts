@@ -4,7 +4,8 @@ import type {
   StakingStats,
   HourlyStakingFlow,
 } from "envio";
-import { ZERO_ADDRESS, LARGE_TRANSFER_THRESHOLD, hourStart } from "./common";
+import { ZERO_ADDRESS, hourStart, recordLargeTransfer } from "./common";
+import { trackTransfer } from "./balances";
 
 // ── Constants ─────────────────────────────────────────────────────────────
 
@@ -278,6 +279,18 @@ indexer.onEvent(
     const { from, to, value } = event.params;
     const ts = event.block.timestamp;
 
+    // Opportunities backend: per-holder sUSDe balances, per-chain supply and
+    // integration TVL (see balances.ts). Mainnet ChainSupply(1_sUSDe) mirrors
+    // StakingStats.susdeTotalSupply by design — a uniform per-chain view.
+    await trackTransfer(context, {
+      chainId: event.chainId,
+      token: "sUSDe",
+      from,
+      to,
+      value,
+      timestamp: ts,
+    });
+
     if (from === ZERO_ADDRESS || to === ZERO_ADDRESS) {
       const stats = await getOrCreateStakingStats(context);
       let supply = stats.susdeTotalSupply;
@@ -290,20 +303,7 @@ indexer.onEvent(
       });
     }
 
-    if (value >= LARGE_TRANSFER_THRESHOLD) {
-      context.LargeTransfer.set({
-        id: `${event.chainId}_${event.block.number}_${event.logIndex}`,
-        chainId: event.chainId,
-        token: "sUSDe",
-        from,
-        to,
-        amount: value,
-        txFrom: event.transaction.from,
-        blockNumber: BigInt(event.block.number),
-        timestamp: BigInt(ts),
-        txHash: event.transaction.hash,
-      });
-    }
+    recordLargeTransfer(context, "sUSDe", event);
   },
 );
 

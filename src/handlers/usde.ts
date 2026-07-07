@@ -1,10 +1,10 @@
 import { indexer } from "envio";
-import type { LargeTransfer } from "envio";
 import { USDE_SILO, handleSiloInflow, handleSiloOutflow } from "./staking";
+import { trackTransfer } from "./balances";
 import {
   ZERO_ADDRESS,
-  LARGE_TRANSFER_THRESHOLD,
   getOrCreateProtocolStats,
+  recordLargeTransfer,
 } from "./common";
 
 // This handler runs for EVERY USDe transfer (millions over the token's
@@ -16,6 +16,19 @@ indexer.onEvent(
   { contract: "USDe", event: "Transfer" },
   async ({ event, context }) => {
     const { from, to, value } = event.params;
+
+    // Opportunities backend: per-holder balances, per-chain supply and
+    // integration TVL. Mainnet ChainSupply(1_USDe) intentionally duplicates
+    // ProtocolStats.usdeTotalSupply — that's by design, a uniform per-chain
+    // view of supply that also covers the L2 OFT deployments.
+    await trackTransfer(context, {
+      chainId: event.chainId,
+      token: "USDe",
+      from,
+      to,
+      value,
+      timestamp: event.block.timestamp,
+    });
 
     // Track circulating supply via mint (from == 0x0) and burn (to == 0x0).
     if (from === ZERO_ADDRESS || to === ZERO_ADDRESS) {
@@ -31,21 +44,7 @@ indexer.onEvent(
     }
 
     // Whale watch: record USDe transfers at or above the threshold.
-    if (value >= LARGE_TRANSFER_THRESHOLD) {
-      const largeTransfer: LargeTransfer = {
-        id: `${event.chainId}_${event.block.number}_${event.logIndex}`,
-        chainId: event.chainId,
-        token: "USDe",
-        from,
-        to,
-        amount: value,
-        txFrom: event.transaction.from,
-        blockNumber: BigInt(event.block.number),
-        timestamp: BigInt(event.block.timestamp),
-        txHash: event.transaction.hash,
-      };
-      context.LargeTransfer.set(largeTransfer);
-    }
+    recordLargeTransfer(context, "USDe", event);
 
     // Silo balance accounting: USDe entering the cooldown silo.
     if (to === USDE_SILO) {
