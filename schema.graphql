@@ -139,11 +139,29 @@ type StakingStats {
   susdeTotalSupply: BigInt!
   # sum of underlying across ACTIVE cooldowns — the forward liability queue
   pendingCooldownAmount: BigInt!
+  # ground truth: the silo's USDe balance from raw transfer accounting.
+  # siloUsdeBalance - pendingCooldownAmount = donations into the silo + any
+  # claims the matcher failed to attribute (see UnmatchedSiloOutflow).
+  siloUsdeBalance: BigInt!
   cumulativeRewards: BigInt!
   cooldownDurationSeconds: BigInt!
   depositCount: Int!
   cooldownCount: Int!
   lastUpdatedTimestamp: BigInt!
+}
+
+# A confirmed unstake claim (USDe left the silo) that could not be attributed
+# to a specific owner's cooldown — the audit trail for pendingCooldownAmount
+# drift. Empty in normal operation.
+type UnmatchedSiloOutflow {
+  id: ID!
+  to: String! @index
+  txFrom: String
+  amount: BigInt!
+  activeCandidates: Int!
+  blockNumber: BigInt!
+  timestamp: BigInt! @index
+  txHash: String!
 }
 
 type HourlyStakingFlow {
