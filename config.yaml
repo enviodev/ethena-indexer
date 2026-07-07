@@ -1,19 +1,40 @@
 # yaml-language-server: $schema=./node_modules/envio/evm.schema.json
 name: ethena-indexer
-description: Ethena Indexer
+description: Ethena trading-desk indexer — USDe mint/redeem flow + sUSDe staking/cooldown queue
+field_selection:
+  transaction_fields:
+    - hash
+    - from
 contracts:
-  - name: ERC20
+  - name: USDe
     events:
-      - event: "Approval(address indexed owner, address indexed spender, uint256 value)"
       - event: "Transfer(address indexed from, address indexed to, uint256 value)"
+  - name: StakedUSDe
+    events:
+      - event: "Deposit(address indexed sender, address indexed owner, uint256 assets, uint256 shares)"
+      - event: "Withdraw(address indexed sender, address indexed receiver, address indexed owner, uint256 assets, uint256 shares)"
+      - event: "RewardsReceived(uint256 amount)"
+      - event: "CooldownDurationUpdated(uint24 previousDuration, uint24 newDuration)"
+      - event: "Transfer(address indexed from, address indexed to, uint256 value)"
+  - name: EthenaMintingV1
+    events:
+      - event: "Mint(address indexed minter, address indexed benefactor, address indexed beneficiary, address collateral_asset, uint256 collateral_amount, uint256 usde_amount)"
+      - event: "Redeem(address indexed redeemer, address indexed benefactor, address indexed beneficiary, address collateral_asset, uint256 collateral_amount, uint256 usde_amount)"
+      - event: "CustodyTransfer(address indexed wallet, address indexed asset, uint256 amount)"
+  - name: EthenaMintingV2
+    events:
+      - event: "Mint(string indexed order_id, address indexed benefactor, address indexed beneficiary, address minter, address collateral_asset, uint256 collateral_amount, uint256 usde_amount)"
+      - event: "Redeem(string indexed order_id, address indexed benefactor, address indexed beneficiary, address redeemer, address collateral_asset, uint256 collateral_amount, uint256 usde_amount)"
+      - event: "CustodyTransfer(address indexed wallet, address indexed asset, uint256 amount)"
 chains:
   - id: 1 # Ethereum Mainnet
-    start_block: 0
+    start_block: 0 # HyperSync auto-detects first event block per contract
     contracts:
-      - name: ERC20
-        address: "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984" # UNI
-  - id: 100 # Gnosis Mainnet
-    start_block: 0
-    contracts:
-      - name: ERC20
-        address: "0x4537e328Bf7e4eFA29D05CAeA260D7fE26af9D74" #UNI
+      - name: USDe
+        address: "0x4c9EDD5852cd905f086C759E8383e09bff1E68B3"
+      - name: StakedUSDe
+        address: "0x9D39A5DE30e57443BfF2A8307A4256c8797A3497" # StakedUSDeV2 (sUSDe)
+      - name: EthenaMintingV1
+        address: "0x2CC440b721d2CaFd6D64908D6d8C4aCC57F8Afc3"
+      - name: EthenaMintingV2
+        address: "0xe3490297a08d6fC8Da46Edb7B6142E4F461b62D3"

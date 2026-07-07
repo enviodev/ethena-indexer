@@ -1,19 +1,157 @@
-type Account {
-  # id is the address of the account
-  id: ID!
-  # approvals are a list of approvals that this account has given
-  approvals: [Approval!]! @derivedFrom(field: "owner")
-  # account balance of tokens
-  balance: BigInt!
+enum FlowType {
+  MINT
+  REDEEM
 }
 
-type Approval {
-  # id is the owner address and spender address [owner-spender]
+enum MintingVersion {
+  V1
+  V2
+}
+
+enum StakeActionType {
+  DEPOSIT
+  COOLDOWN_STARTED
+  WITHDRAW
+  UNSTAKE_CLAIMED
+}
+
+enum CooldownStatus {
+  ACTIVE
+  CLAIMED
+}
+
+# ── USDe mint/redeem flow (the trading-desk tape) ─────────────────────────
+
+type MintRedeemEvent {
+  id: ID! # chainId_blockNumber_logIndex
+  flowType: FlowType!
+  version: MintingVersion!
+  # V2 only — indexed string param, so this is the keccak topic hash of the order id
+  orderId: String
+  benefactor: String! @index
+  beneficiary: String! @index
+  # minter (V1/V2 Mint) or redeemer (V1/V2 Redeem)
+  executor: String!
+  collateralAsset: String! @index
+  collateralAmount: BigInt!
+  usdeAmount: BigInt!
+  blockNumber: BigInt!
+  timestamp: BigInt! @index
+  txHash: String!
+}
+
+type CustodyEvent {
   id: ID!
-  # amount is the amount of tokens approved
+  version: MintingVersion!
+  wallet: String! @index
+  asset: String! @index
   amount: BigInt!
-  # owner is the account that approved the tokens
-  owner: Account!
-  # spender is the account that is approved to spend the tokens
-  spender: Account!
+  blockNumber: BigInt!
+  timestamp: BigInt! @index
+  txHash: String!
+}
+
+type CollateralAssetStats {
+  id: ID! # collateral asset address
+  usdeMinted: BigInt!
+  usdeRedeemed: BigInt!
+  collateralDeposited: BigInt!
+  collateralWithdrawn: BigInt!
+  mintCount: Int!
+  redeemCount: Int!
+  lastUpdatedTimestamp: BigInt!
+}
+
+type HourlyFlow {
+  id: ID! # hour bucket start timestamp in seconds, as string
+  hourStartTimestamp: BigInt! @index
+  usdeMinted: BigInt!
+  usdeRedeemed: BigInt!
+  netFlow: BigInt!
+  mintCount: Int!
+  redeemCount: Int!
+}
+
+type ProtocolStats {
+  id: ID! # "global"
+  usdeTotalSupply: BigInt!
+  cumulativeUsdeMinted: BigInt!
+  cumulativeUsdeRedeemed: BigInt!
+  mintCount: Int!
+  redeemCount: Int!
+  lastUpdatedTimestamp: BigInt!
+}
+
+type LargeTransfer {
+  id: ID!
+  token: String! @index # "USDe" | "sUSDe"
+  from: String! @index
+  to: String! @index
+  amount: BigInt!
+  txFrom: String
+  blockNumber: BigInt!
+  timestamp: BigInt! @index
+  txHash: String!
+}
+
+# ── sUSDe staking & cooldown liability queue ──────────────────────────────
+
+type StakeAction {
+  id: ID!
+  actionType: StakeActionType!
+  # owner whose staked position changed
+  account: String! @index
+  caller: String
+  receiver: String
+  # USDe amount
+  assets: BigInt!
+  # sUSDe shares where known
+  shares: BigInt
+  blockNumber: BigInt!
+  timestamp: BigInt! @index
+  txHash: String!
+}
+
+type SusdeCooldown {
+  id: ID! # owner address — contract keeps one active cooldown per owner
+  owner: String! @index
+  underlyingAmount: BigInt! @index
+  cooldownEnd: BigInt! @index
+  status: CooldownStatus! @index
+  startedAt: BigInt!
+  claimedAt: BigInt
+  lastTxHash: String!
+}
+
+type RewardsPayment {
+  id: ID!
+  amount: BigInt!
+  blockNumber: BigInt!
+  timestamp: BigInt! @index
+  txHash: String!
+}
+
+type StakingStats {
+  id: ID! # "global"
+  # net USDe in the vault: deposits - cooldown starts - direct withdrawals + rewards
+  totalStakedUsde: BigInt!
+  # sUSDe shares, tracked from sUSDe mint/burn transfers
+  susdeTotalSupply: BigInt!
+  # sum of underlying across ACTIVE cooldowns — the forward liability queue
+  pendingCooldownAmount: BigInt!
+  cumulativeRewards: BigInt!
+  cooldownDurationSeconds: BigInt!
+  depositCount: Int!
+  cooldownCount: Int!
+  lastUpdatedTimestamp: BigInt!
+}
+
+type HourlyStakingFlow {
+  id: ID! # hour bucket start timestamp in seconds, as string
+  hourStartTimestamp: BigInt! @index
+  usdeStaked: BigInt!
+  usdeCooldownStarted: BigInt!
+  usdeUnstaked: BigInt!
+  rewardsReceived: BigInt!
+  netFlow: BigInt! # staked - cooldownStarted - direct withdrawals
 }
