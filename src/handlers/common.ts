@@ -9,7 +9,6 @@ export const LARGE_TRANSFER_THRESHOLD = 1_000_000n * 10n ** 18n;
 // Structural shape of a Transfer event as every handler receives it — lets one
 // writer serve the native USDe/sUSDe handlers and the OFT handlers alike.
 export type TransferEventLike = {
-  chainId: number;
   logIndex: number;
   params: { from: string; to: string; value: bigint };
   block: { number: number; timestamp: number };
@@ -28,7 +27,6 @@ export function recordLargeTransfer(
   if (event.params.value < LARGE_TRANSFER_THRESHOLD) return;
   context.LargeTransfer.set({
     id: `${event.chainId}_${event.block.number}_${event.logIndex}`,
-    chainId: event.chainId,
     token,
     from: event.params.from,
     to: event.params.to,

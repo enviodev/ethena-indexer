@@ -84,7 +84,6 @@ type ProtocolStats {
 
 type LargeTransfer {
   id: ID!
-  chainId: Int! @index
   token: String! @index # "USDe" | "sUSDe"
   from: String! @index
   to: String! @index
@@ -99,7 +98,6 @@ type LargeTransfer {
 
 type TokenBalance {
   id: ID! # chainId_token_holder
-  chainId: Int! @index
   token: String! @index # "USDe" | "sUSDe"
   holder: String! @index
   balance: BigInt! @index
@@ -118,7 +116,6 @@ type Opportunity {
   name: String!
   protocol: String! @index
   category: String! @index
-  chainId: Int! @index
   # true for venues users can put money into (money-market/dex-pool/
   # yield-tokenization/vault/perps); false for supply-attribution
   # infrastructure (bridge/cex/other). "Top opportunities" queries should
@@ -138,7 +135,6 @@ type Opportunity {
 # chains than this indexer covers, so indexed L2 supply <= adapter balance).
 type ChainSupply {
   id: ID! # chainId_token
-  chainId: Int! @index
   token: String! @index
   totalSupply: BigInt!
   lastUpdatedTimestamp: BigInt!

@@ -21,7 +21,6 @@ async function handleOftTransfer(
   const { from, to, value } = event.params;
 
   await trackTransfer(context, {
-    chainId: event.chainId,
     token,
     from,
     to,

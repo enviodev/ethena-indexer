@@ -326,7 +326,6 @@ indexer.onEvent(
     // integration TVL (see balances.ts). Mainnet ChainSupply(1_sUSDe) mirrors
     // StakingStats.susdeTotalSupply by design — a uniform per-chain view.
     await trackTransfer(context, {
-      chainId: event.chainId,
       token: "sUSDe",
       from,
       to,

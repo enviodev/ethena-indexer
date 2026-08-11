@@ -5,7 +5,6 @@ import { isYieldCategory, lookupOpportunity } from "./registry";
 export type TokenTag = "USDe" | "sUSDe";
 
 export type TransferLike = {
-  chainId: number;
   token: TokenTag;
   from: string; // checksummed, as decoded from the event
   to: string;
@@ -102,7 +101,6 @@ async function applyBalanceChange(
     name: entry.name,
     protocol: entry.protocol,
     category: entry.category,
-    chainId: entry.chainId,
     isYieldVenue: isYieldCategory(entry.category),
     usdeBalance: 0n,
     susdeBalance: 0n,

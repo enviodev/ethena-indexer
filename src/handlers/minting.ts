@@ -25,7 +25,6 @@ type MintRedeemInput = {
   collateralAsset: string;
   collateralAmount: bigint;
   usdeAmount: bigint;
-  chainId: number;
   blockNumber: number;
   timestamp: number;
   logIndex: number;
@@ -123,7 +122,6 @@ type CustodyInput = {
   wallet: string;
   asset: string;
   amount: bigint;
-  chainId: number;
   blockNumber: number;
   timestamp: number;
   logIndex: number;
@@ -162,7 +160,6 @@ indexer.onEvent(
       collateralAsset: event.params.collateral_asset,
       collateralAmount: event.params.collateral_amount,
       usdeAmount: event.params.usde_amount,
-      chainId: event.chainId,
       blockNumber: event.block.number,
       timestamp: event.block.timestamp,
       logIndex: event.logIndex,
@@ -184,7 +181,6 @@ indexer.onEvent(
       collateralAsset: event.params.collateral_asset,
       collateralAmount: event.params.collateral_amount,
       usdeAmount: event.params.usde_amount,
-      chainId: event.chainId,
       blockNumber: event.block.number,
       timestamp: event.block.timestamp,
       logIndex: event.logIndex,
@@ -201,7 +197,6 @@ indexer.onEvent(
       wallet: event.params.wallet,
       asset: event.params.asset,
       amount: event.params.amount,
-      chainId: event.chainId,
       blockNumber: event.block.number,
       timestamp: event.block.timestamp,
       logIndex: event.logIndex,
@@ -225,7 +220,6 @@ indexer.onEvent(
       collateralAsset: event.params.collateral_asset,
       collateralAmount: event.params.collateral_amount,
       usdeAmount: event.params.usde_amount,
-      chainId: event.chainId,
       blockNumber: event.block.number,
       timestamp: event.block.timestamp,
       logIndex: event.logIndex,
@@ -247,7 +241,6 @@ indexer.onEvent(
       collateralAsset: event.params.collateral_asset,
       collateralAmount: event.params.collateral_amount,
       usdeAmount: event.params.usde_amount,
-      chainId: event.chainId,
       blockNumber: event.block.number,
       timestamp: event.block.timestamp,
       logIndex: event.logIndex,
@@ -264,7 +257,6 @@ indexer.onEvent(
       wallet: event.params.wallet,
       asset: event.params.asset,
       amount: event.params.amount,
-      chainId: event.chainId,
       blockNumber: event.block.number,
       timestamp: event.block.timestamp,
       logIndex: event.logIndex,

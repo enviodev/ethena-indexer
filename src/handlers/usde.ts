@@ -22,7 +22,6 @@ indexer.onEvent(
     // ProtocolStats.usdeTotalSupply — that's by design, a uniform per-chain
     // view of supply that also covers the L2 OFT deployments.
     await trackTransfer(context, {
-      chainId: event.chainId,
       token: "USDe",
       from,
       to,

@@ -266,7 +266,6 @@ describe("minting/usde handlers (simulate)", () => {
     const id = `1_${blockNumber}_7`;
     t.expect(await indexer.LargeTransfer.getOrThrow(id)).toEqual({
       id,
-      chainId: 1,
       token: "USDe",
       from: HOLDER,
       to: COUNTERPARTY,
